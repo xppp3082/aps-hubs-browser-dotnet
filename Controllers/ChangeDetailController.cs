@@ -92,6 +92,12 @@ public class ChangeDetailController : ControllerBase
         return Ok(createdChangeDetail);
     }
 
+    /// <summary>
+    /// 更新客變紀錄
+    /// </summary>
+    /// <param name="id"> 客變紀錄 Id</param>
+    /// <param name="changeDetail"> 客變紀錄</param>
+    /// <returns> 更新的客變紀錄</returns>
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateChangeDetail(
         [FromRoute] int id,
@@ -103,6 +109,11 @@ public class ChangeDetailController : ControllerBase
         return Ok(updatedChangeDetail);
     }
 
+    /// <summary>
+    /// 刪除客變紀錄
+    /// </summary>
+    /// <param name="id"> 客變紀錄 Id</param>
+    /// <returns> 刪除的客變紀錄</returns>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteChangeDetail([FromRoute] int id)
     {

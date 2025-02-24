@@ -17,6 +17,10 @@ public class CustomerController : ControllerBase
         _customerService = customerService;
     }
 
+    /// <summary>
+    /// 獲取所有客戶
+    /// </summary>
+    /// <returns> 所有客戶</returns>
     [HttpGet]
     public async Task<IActionResult> GetCustomers()
     {
@@ -29,6 +33,11 @@ public class CustomerController : ControllerBase
         return Ok(customers);
     }
 
+    /// <summary>
+    /// 分頁獲取所有客戶
+    /// </summary>
+    /// <param name="page"> 頁碼</param>
+    /// <returns> 分頁獲取所有客戶</returns>
     [HttpGet("paged")]
     public async Task<ActionResult<PagedResult<Customer>>> GetCustomers([FromQuery] int page = 1)
     {
@@ -43,6 +52,11 @@ public class CustomerController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// 新增客戶
+    /// </summary>
+    /// <param name="customer"> 客戶</param>
+    /// <returns> 新增的客戶</returns>
     [HttpPost]
     public async Task<IActionResult> AddCustomer([FromBody] Customer customer)
     {
@@ -62,6 +76,12 @@ public class CustomerController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// 更新客戶
+    /// </summary>
+    /// <param name="id"> 客戶 Id</param>
+    /// <param name="customer"> 客戶</param>
+    /// <returns> 更新的客戶</returns>
     [HttpPut]
     public async Task<IActionResult> UpdateCustomer(
         [FromQuery] int id,
@@ -83,6 +103,11 @@ public class CustomerController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// 刪除客戶
+    /// </summary>
+    /// <param name="id"> 客戶 Id</param>
+    /// <returns> 刪除的客戶</returns>
     [HttpDelete]
     public async Task<IActionResult> DeleteCustomer([FromQuery] int id)
     {

@@ -8,8 +8,8 @@ public class Unit
     [Key]
     public int Id { get; set; }
 
-    [Column("project_id")]
-    public int ProjectId { get; set; }
+    // [Column("project_id")]
+    // public int ProjectId { get; set; }
 
     [Column("unit_number")]
     public string UnitNumber { get; set; }
@@ -17,8 +17,8 @@ public class Unit
     [Column("floor")]
     public int Floor { get; set; }
 
-    [Column("customer_id")]
-    public int? CustomerId { get; set; }
+    // [Column("customer_id")]
+    // public int? CustomerId { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }

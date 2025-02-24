@@ -159,6 +159,9 @@ FOREIGN KEY (customer_project_id)
 REFERENCES customer_project(id)
 ON DELETE SET NULL;
 
+SELECT * FROM customer_project;
+DELETE FROM unit;
+select * FROM unit;
 INSERT INTO unit (project_id, unit_number, floor, customer_id) VALUES
 (1, 'A101', 1, 1), (1, 'A102', 1, 2), (2, 'B201', 2, 3), (3, 'C301', 3, 4), (4, 'D401', 4, 5),
 (5, 'E501', 5, 6), (6, 'F601', 6, 7), (7, 'G701', 7, 8), (8, 'H801', 8, 9), (9, 'I901', 9, 10);
@@ -213,22 +216,47 @@ describe change_detail;
 SELECT * FROM cec_aps.change_detail;
 
 SHOW CREATE TABLE unit;
-CREATE TABLE `unit` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `project_id` int NOT NULL,
-  `unit_number` varchar(50) NOT NULL,
-  `floor` int DEFAULT NULL,
-  `customer_id` int DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `customer_project_id` int DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `project_id` (`project_id`),
-  KEY `customer_id` (`customer_id`),
-  KEY `fk_unit_customer_project` (`customer_project_id`),
-  CONSTRAINT `fk_unit_customer_project` FOREIGN KEY (`customer_project_id`) REFERENCES `customer_project` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `unit_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `project` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `unit_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+SELECT * FROM unit;
 
-ALTER TABLE unit DROP FOREIGN KEY unit_ibfk_1;
+SELECT * FROM unit u
+LEFT JOIN customer_project cp ON u.customer_id = cp.customer_id AND u.project_id = cp.project_id;
+
+SELECT * FROM customer_project;
+
+UPDATE unit
+SET unit.customer_project_id = (
+	SELECT cp.id
+    FROM customer_project cp
+    WHERE cp.customer_id = unit.customer_id
+    AND cp.project_id = unit.project_id
+);
+
+
+UPDATE unit u
+JOIN customer_project cp ON u.customer_id = cp.customer_id AND u.project_id = cp.project_id
+SET u.customer_project_id = cp.id;
+
+SELECT * FROM change_detail;
+SELECT * FROM change_request;
+select * FROM project;
+SELECT * FROM customer;
+
+
+SELECT * FROM unit;
+-- 移除欄位
+ALTER TABLE unit
+DROP COLUMN customer_id;
+
+ALTER TABLE unit
+DROP COLUMN project_id;
+
+
+SELECT * FROM unit;
+SELECT * FROM change_detail LEFT JOIN unit
+ON change_detail.unit_id = unit.id;
+
+SELECT * FROM customer_project;
+SELECT * FROM unit 
+WHERE customer_project_id IN (SELECT cp.id FROM customer_project cp WHERE cp.customer_id = 4 AND cp.project_id =4);
+UPDATE unit u SET u.customer_project_id = 16
+WHERE u.id = 17;

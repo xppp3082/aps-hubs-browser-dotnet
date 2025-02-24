@@ -17,9 +17,9 @@ public class UnitServiceImpl : IUnitService
         _defaultPageSize = _configuration.GetValue<int>("Pagination:DefaultPageSize");
     }
 
-    public async Task<Unit> AddUnitAsync(Unit unit)
+    public async Task<Unit> AddUnitAsync(Unit unit, int customerId, int projectId)
     {
-        return await _unitRepository.AddUnitAsync(unit);
+        return await _unitRepository.AddUnitAsync(unit, customerId, projectId);
     }
 
     public async Task<bool> DeleteUnitAsync(int id)
@@ -32,14 +32,14 @@ public class UnitServiceImpl : IUnitService
         return await _unitRepository.GetAllUnitsAsync();
     }
 
-    public async Task<List<Unit>> GetUnitsByProjectIdAsync(int projectId)
+    public async Task<List<Unit>> GetUnitsByCustomerProjectIdAsync(int customerId, int projectId)
     {
-        return await _unitRepository.GetUnitsByProjectIdAsync(projectId);
+        return await _unitRepository.GetUnitsByCustomerProjectIdAsync(customerId, projectId);
     }
 
-    public async Task<Unit> UpdateUnitAsync(Unit unit)
+    public async Task<Unit> UpdateUnitAsync(Unit unit, int projectId, int customerId)
     {
-        return await _unitRepository.UpdateUnitAsync(unit);
+        return await _unitRepository.UpdateUnitAsync(unit, projectId, customerId);
     }
 
     public async Task<PagedResult<Unit>> GetPagedUnitsByProjectIdAndCustomerIdAsync(

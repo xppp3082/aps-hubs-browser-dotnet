@@ -27,14 +27,19 @@ public class UnitRepositoryImpl : IUnitRepository
         }
     }
 
-    public async Task<List<Unit>> GetUnitsByProjectIdAsync(int projectId)
+    public async Task<List<Unit>> GetUnitsByCustomerProjectIdAsync(int customerId, int projectId)
     {
         try
         {
             using (var connection = new MySqlConnection(_connectionString))
             {
-                string query = "SELECT * FROM unit WHERE project_id = @ProjectId";
-                var units = await connection.QueryAsync<Unit>(query, new { ProjectId = projectId });
+                string query =
+                    @"SELECT * FROM unit WHERE customer_project_id IN 
+                    (SELECT id FROM customer_project cp WHERE cp.customer_id = @CustomerId AND cp.project_id = @ProjectId)";
+                var units = await connection.QueryAsync<Unit>(
+                    query,
+                    new { ProjectId = projectId, CustomerId = customerId }
+                );
                 return units.ToList();
             }
         }
@@ -44,14 +49,7 @@ public class UnitRepositoryImpl : IUnitRepository
         }
     }
 
-    // public async Task<PagedResult<Unit>> GetPagedUnitsAsync(int pageNumber, int pageSize)
-    // {
-    //     using (var connection = new MySqlConnection(_connectionString))
-    //     {
-    //         await connection.OpenAsync();
-    //     }
-    // }
-    public async Task<Unit> AddUnitAsync(Unit unit)
+    public async Task<Unit> AddUnitAsync(Unit unit, int customerId, int projectId)
     {
         try
         {
@@ -61,12 +59,21 @@ public class UnitRepositoryImpl : IUnitRepository
                 unit.UpdatedAt = DateTime.UtcNow;
                 string query =
                     @"
-            INSERT INTO unit (project_id, unit_number, floor, customer_id) 
-            VALUES (@ProjectId, @UnitNumber, @Floor, @CustomerId);
+            INSERT INTO unit (unit_number, floor, customer_project_id) 
+            VALUES (@UnitNumber, @Floor, (SELECT id FROM customer_project cp WHERE cp.customer_id = @CustomerId AND cp.project_id = @ProjectId));
             SELECT * FROM unit WHERE id = LAST_INSERT_ID();
             ";
                 // var result = await connection.ExecuteAsync(query, unit);
-                Unit result = await connection.QuerySingleAsync<Unit>(query, unit);
+                Unit result = await connection.QuerySingleAsync<Unit>(
+                    query,
+                    new
+                    {
+                        UnitNumber = unit.UnitNumber,
+                        Floor = unit.Floor,
+                        CustomerId = customerId,
+                        ProjectId = projectId,
+                    }
+                );
                 return result;
             }
         }
@@ -93,7 +100,7 @@ public class UnitRepositoryImpl : IUnitRepository
         }
     }
 
-    public async Task<Unit> UpdateUnitAsync(Unit unit)
+    public async Task<Unit> UpdateUnitAsync(Unit unit, int projectId, int customerId)
     {
         using (var connection = new MySqlConnection(_connectionString))
         {
@@ -101,14 +108,23 @@ public class UnitRepositoryImpl : IUnitRepository
             string query =
                 @"
             UPDATE unit SET 
-            project_id = @ProjectId,
             unit_number = @UnitNumber,
             floor = @Floor,
-            customer_id = @CustomerId
+            customer_project_id = (SELECT id FROM customer_project cp WHERE cp.customer_id = @CustomerId AND cp.project_id = @ProjectId)
             WHERE id = @Id;
             SELECT * FROM unit WHERE id = @Id;
             ";
-            var result = await connection.QuerySingleAsync<Unit>(query, unit);
+            var result = await connection.QuerySingleAsync<Unit>(
+                query,
+                new
+                {
+                    UnitNumber = unit.UnitNumber, // 明確指定參數
+                    Floor = unit.Floor, // 明確指定參數
+                    Id = unit.Id,
+                    CustomerId = customerId,
+                    ProjectId = projectId,
+                }
+            );
             return result;
         }
     }
@@ -125,7 +141,7 @@ public class UnitRepositoryImpl : IUnitRepository
             string countQuery =
                 @"
             SELECT COUNT(*) FROM unit 
-            WHERE project_id = @ProjectId AND customer_id = @CustomerId;
+            WHERE customer_project_id = (SELECT id FROM customer_project cp WHERE cp.customer_id = @CustomerId AND cp.project_id = @ProjectId);
             ";
             var totalItems = await connection.ExecuteScalarAsync<int>(
                 countQuery,
@@ -137,7 +153,7 @@ public class UnitRepositoryImpl : IUnitRepository
             string query =
                 @"
             SELECT * FROM unit 
-            WHERE project_id = @ProjectId AND customer_id = @CustomerId
+            WHERE customer_project_id = (SELECT id FROM customer_project cp WHERE cp.customer_id = @CustomerId AND cp.project_id = @ProjectId)
             LIMIT @PageSize OFFSET @Offset;
             ";
             var units = await connection.QueryAsync<Unit>(
