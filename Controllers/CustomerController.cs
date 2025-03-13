@@ -52,6 +52,104 @@ public class CustomerController : ControllerBase
         }
     }
 
+    // /// <summary>
+    // /// 分頁獲取指定專案的客戶
+    // /// </summary>
+    // /// <param name="projectId">專案ID</param>
+    // /// <param name="page">頁碼</param>
+    // /// <returns>分頁獲取指定專案的客戶</returns>
+    // [HttpGet("project/{projectId}/paged")]
+    // public async Task<ActionResult<PagedResult<Customer>>> GetCustomersByProject(
+    //     int projectId,
+    //     [FromQuery] int page = 1
+    // )
+    // {
+    //     try
+    //     {
+    //         var result = await _customerService.GetPagedCustomersByProjectAsync(projectId, page);
+    //         return Ok(result);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return StatusCode(500, $"Error: {ex.Message}");
+    //     }
+    // }
+
+    /// <summary>
+    /// 分頁獲取指定專案的客戶
+    /// </summary>
+    /// <param name="projectUrn">專案URN</param>
+    /// <param name="page">頁碼</param>
+    /// <returns>分頁獲取指定專案的客戶</returns>
+    [HttpGet("project/{projectUrn}/paged")]
+    public async Task<ActionResult<PagedResult<Customer>>> GetCustomersByProjectUrn(
+        string projectUrn,
+        [FromQuery] int page = 1
+    )
+    {
+        try
+        {
+            var result = await _customerService.GetPagedCustomersByProjectUrnAsync(
+                projectUrn,
+                page
+            );
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
+    }
+
+    // /// <summary>
+    // /// 分頁獲取不在指定專案的客戶
+    // /// </summary>
+    // /// <param name="projectId">專案ID</param>
+    // /// <param name="page">頁碼</param>
+    // /// <returns>分頁獲取不在指定專案的客戶</returns>
+    // [HttpGet("not-in-project/{projectId}/paged")]
+    // public async Task<ActionResult<PagedResult<Customer>>> GetCustomersNotInProject(
+    //     int projectId,
+    //     [FromQuery] int page = 1
+    // )
+    // {
+    //     try
+    //     {
+    //         var result = await _customerService.GetPagedCustomersNotInProjectAsync(projectId, page);
+    //         return Ok(result);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return StatusCode(500, $"Error: {ex.Message}");
+    //     }
+    // }
+
+    /// <summary>
+    /// 分頁獲取不在指定專案的客戶
+    /// </summary>
+    /// <param name="projectUrn">專案URN</param>
+    /// <param name="page">頁碼</param>
+    /// <returns>分頁獲取不在指定專案的客戶</returns>
+    [HttpGet("not-in-project/{projectUrn}/paged")]
+    public async Task<ActionResult<PagedResult<Customer>>> GetCustomersNotInProjectUrn(
+        string projectUrn,
+        [FromQuery] int page = 1
+    )
+    {
+        try
+        {
+            var result = await _customerService.GetPagedCustomersNotInProjectUrnAsync(
+                projectUrn,
+                page
+            );
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
+    }
+
     /// <summary>
     /// 新增客戶
     /// </summary>
@@ -73,6 +171,36 @@ public class CustomerController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 將多個客戶與專案建立關聯
+    /// </summary>
+    /// <param name="projectUrn">專案URN</param>
+    /// <param name="customerIds">客戶ID列表</param>
+    /// <returns>操作結果</returns>
+    [HttpPost("project/{projectUrn}/associate")]
+    public async Task<IActionResult> AssociateCustomersWithProject(
+        string projectUrn,
+        [FromBody] List<int> customerIds
+    )
+    {
+        try
+        {
+            var result = await _customerService.AssociateCustomersWithProjectAsync(
+                projectUrn,
+                customerIds
+            );
+            return Ok(new { Message = "客戶與專案關聯建立成功", AssociatedCount = result });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error: {ex.Message}");
         }
     }
 

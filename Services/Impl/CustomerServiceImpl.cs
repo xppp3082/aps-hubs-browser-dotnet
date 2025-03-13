@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 
-
 public class CustomerServiceImpl : ICustomerService
 {
     private readonly ICustomerRepository _customerRepository;
@@ -23,12 +22,37 @@ public class CustomerServiceImpl : ICustomerService
     {
         // 在這邊添加業務邏輯，例如:
         // 驗證客戶資料
-        if (string.IsNullOrEmpty(customer.Name) || string.IsNullOrEmpty(customer.Phone) || string.IsNullOrEmpty(customer.Email))
+        if (
+            string.IsNullOrEmpty(customer.Name)
+            || string.IsNullOrEmpty(customer.Phone)
+            || string.IsNullOrEmpty(customer.Email)
+        )
         {
             throw new ArgumentException("All fields are required.");
         }
 
         return await _customerRepository.AddCustomerAsync(customer);
+    }
+
+    public async Task<int> AssociateCustomersWithProjectAsync(
+        string projectUrn,
+        List<int> customerIds
+    )
+    {
+        // 驗證專案是否存在
+
+        // 或者直接在 CustomerRepository 的 AssociateCustomersWithProjectAsync 方法中處理
+
+        if (customerIds == null || customerIds.Count == 0)
+        {
+            throw new ArgumentException("客戶ID列表不能為空");
+        }
+
+        // 建立關聯
+        return await _customerRepository.AssociateCustomersWithProjectAsync(
+            projectUrn,
+            customerIds
+        );
     }
 
     public async Task<bool> DeleteCustomerAsync(int id)
@@ -49,8 +73,65 @@ public class CustomerServiceImpl : ICustomerService
 
     public async Task<PagedResult<Customer>> GetPagedCustomersAsync(int pageNumber)
     {
-        if (pageNumber < 1) pageNumber = 1;
+        if (pageNumber < 1)
+            pageNumber = 1;
         return await _customerRepository.GetPagedCustomersAsync(pageNumber, _defaultPageSize);
+    }
+
+    public async Task<PagedResult<Customer>> GetPagedCustomersByProjectAsync(
+        int projectId,
+        int pageNumber
+    )
+    {
+        if (pageNumber < 1)
+            pageNumber = 1;
+        return await _customerRepository.GetPagedCustomersByProjectAsync(
+            projectId,
+            pageNumber,
+            _defaultPageSize
+        );
+    }
+
+    public async Task<PagedResult<Customer>> GetPagedCustomersByProjectUrnAsync(
+        string projectUrn,
+        int pageNumber
+    )
+    {
+        if (pageNumber < 1)
+            pageNumber = 1;
+        return await _customerRepository.GetPagedCustomersByProjectUrnAsync(
+            projectUrn,
+            pageNumber,
+            _defaultPageSize
+        );
+    }
+
+    public async Task<PagedResult<Customer>> GetPagedCustomersNotInProjectAsync(
+        int projectId,
+        int pageNumber
+    )
+    {
+        if (pageNumber < 1)
+            pageNumber = 1;
+        return await _customerRepository.GetPagedCustomersNotInProjectAsync(
+            projectId,
+            pageNumber,
+            _defaultPageSize
+        );
+    }
+
+    public async Task<PagedResult<Customer>> GetPagedCustomersNotInProjectUrnAsync(
+        string projectUrn,
+        int pageNumber
+    )
+    {
+        if (pageNumber < 1)
+            pageNumber = 1;
+        return await _customerRepository.GetPagedCustomersNotInProjectUrnAsync(
+            projectUrn,
+            pageNumber,
+            _defaultPageSize
+        );
     }
 
     public async Task<Customer> UpdateCustomerAsync(int id, Customer customer)

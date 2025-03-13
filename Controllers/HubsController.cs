@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Autodesk.DataManagement.Model;
@@ -43,7 +45,11 @@ public class HubsController : ControllerBase
     }
 
     [HttpGet("{hub}/projects/{project}/contents")]
-    public async Task<ActionResult> ListItems(string hub, string project, [FromQuery] string folder_id)
+    public async Task<ActionResult> ListItems(
+        string hub,
+        string project,
+        [FromQuery] string folder_id
+    )
     {
         var tokens = await AuthController.PrepareTokens(Request, Response, _aps);
         if (tokens == null)
@@ -54,21 +60,73 @@ public class HubsController : ControllerBase
         {
             return Ok(
                 from folder in await _aps.GetTopFolders(hub, project, tokens)
-                select new { id = folder.Id, name = folder.Attributes.DisplayName, folder = true }
+                select new
+                {
+                    id = folder.Id,
+                    name = folder.Attributes.DisplayName,
+                    folder = true,
+                }
             );
         }
         else
         {
             var contents = await _aps.GetFolderContents(project, folder_id, tokens);
-            var folders = from entry in contents
+            var folders =
+                from entry in contents
                 where entry is FolderData
                 select entry as FolderData into folder
-                select new { id = folder.Id, name = folder.Attributes.DisplayName, folder = true };
-            var items = from entry in contents
-                where entry is ItemData
-                select entry as ItemData into item
-                select new { id = item.Id, name = item.Attributes.DisplayName, folder = false };
-            return Ok(folders.Concat(items));
+                select new
+                {
+                    id = folder.Id,
+                    name = folder.Attributes.DisplayName,
+                    createdTime = folder.Attributes.CreateTime,
+                    createUserName = folder.Attributes.CreateUserName,
+                    lastModifiedTime = folder.Attributes.LastModifiedTime,
+                    lastModifiedUserName = folder.Attributes.LastModifiedUserName,
+                    folder = true,
+                    tipVersion = (object)null, // 添加一個空的 tipVersion 屬性以保持結構一致
+                };
+
+            var itemsList = new List<object>();
+            foreach (var entry in contents.Where(e => e is ItemData))
+            {
+                var item = entry as ItemData;
+                var tipVersion = await _aps.GetTipVersion(project, item.Id, tokens);
+
+                itemsList.Add(
+                    new
+                    {
+                        id = item.Id,
+                        name = item.Attributes.DisplayName,
+                        createdTime = item.Attributes.CreateTime,
+                        createUserName = item.Attributes.CreateUserName,
+                        lastModifiedTime = item.Attributes.LastModifiedTime,
+                        lastModifiedUserName = item.Attributes.LastModifiedUserName,
+                        folder = false,
+                        tipVersion = tipVersion != null
+                            ? tipVersion.Attributes.Extension.Data
+                            : null,
+                    }
+                );
+            }
+            // var items =
+            //     from entry in contents
+            //     where entry is ItemData
+            //     select entry as ItemData into item
+            //     select new
+            //     {
+            //         id = item.Id,
+            //         name = item.Attributes.DisplayName,
+            //         createdTime = item.Attributes.CreateTime,
+            //         createUserName = item.Attributes.CreateUserName,
+            //         lastModifiedTime = item.Attributes.LastModifiedTime,
+            //         lastModifiedUserName = item.Attributes.LastModifiedUserName,
+            //         folder = false,
+            //         tipVersion = item.Relationships.Tip,
+            //     };
+            // return Ok(folders.Concat(items));
+            var result = folders.Cast<object>().Concat(itemsList);
+            return Ok(result);
         }
     }
 
@@ -84,5 +142,25 @@ public class HubsController : ControllerBase
             from version in await _aps.GetVersions(project, item, tokens)
             select new { id = version.Id, name = version.Attributes.CreateTime }
         );
+    }
+
+    [HttpGet("{hub}/projects/{project}/contents/{item}/tip")]
+    public async Task<ActionResult> GetTipVersion(string hub, string project, string item)
+    {
+        var tokens = await AuthController.PrepareTokens(Request, Response, _aps);
+        if (tokens == null)
+        {
+            return Unauthorized();
+        }
+
+        // Get the tip version directly
+        var tipVersion = await _aps.GetTipVersion(project, item, tokens);
+
+        if (tipVersion == null)
+        {
+            return NotFound(); // Handle case where no version is found
+        }
+        // return Ok(tipVersion);
+        return Ok(new { id = tipVersion.Id, attributes = tipVersion.Attributes });
     }
 }

@@ -54,6 +54,8 @@ public class Startup
         services.AddScoped<IChangeDetailRepository, ChangeDetailRepositoryImpl>();
         services.AddScoped<IChangeDetailService, ChangeDetailServiceImpl>();
 
+        services.AddScoped<IProjectRepository, ProjectRepositoryImpl>();
+        services.AddScoped<IProjectService, ProjectServiceImpl>();
         // // 配置 Dapper 的全局映射
         // DefaultTypeMap.MatchNamesWithUnderscores = true;
 
@@ -62,6 +64,7 @@ public class Startup
         {
             config.AddMap(new UnitMap());
             config.AddMap(new ChangeDetailMap());
+            config.AddMap(new ProjectMap());
         });
 
         ILogger logger = LoggerFactory
@@ -94,6 +97,19 @@ public class Startup
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             c.IncludeXmlComments(xmlPath);
         });
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy(
+                "AllowNextJS",
+                builder =>
+                    builder
+                        .WithOrigins("http://localhost:3000")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials()
+            );
+        });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -115,6 +131,7 @@ public class Startup
         app.UseDefaultFiles();
         app.UseStaticFiles();
         app.UseRouting();
+        app.UseCors("AllowNextJS"); // 在 UseRouting 之後，UseEndpoints 之前
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();

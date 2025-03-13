@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Dapper;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
-
 
 public class ProjectRepositoryImpl : IProjectRepository
 {
@@ -29,13 +29,15 @@ public class ProjectRepositoryImpl : IProjectRepository
             {
                 while (await reader.ReadAsync())
                 {
-                    projects.Add(new Project
-                    {
-                        Id = reader.GetInt32("id"),
-                        Name = reader.GetString("name"),
-                        CreatedAt = reader.GetDateTime("created_at"),
-                        UpdatedAt = reader.GetDateTime("updated_at")
-                    });
+                    projects.Add(
+                        new Project
+                        {
+                            Id = reader.GetInt32("id"),
+                            Name = reader.GetString("name"),
+                            CreatedAt = reader.GetDateTime("created_at"),
+                            UpdatedAt = reader.GetDateTime("updated_at"),
+                        }
+                    );
                 }
             }
         }
@@ -61,7 +63,7 @@ public class ProjectRepositoryImpl : IProjectRepository
             }
 
             string query =
-            @"INSERT INTO project (urn, name, created_at, updated_at)
+                @"INSERT INTO project (urn, name, created_at, updated_at)
             VALUES (@urn, @name, @created_at, @updated_at);
             SELECT * FROM project WHERE id = LAST_INSERT_ID();";
 
@@ -83,13 +85,34 @@ public class ProjectRepositoryImpl : IProjectRepository
                             Urn = reader.GetString("urn"),
                             Name = reader.GetString("name"),
                             CreatedAt = reader.GetDateTime("created_at"),
-                            UpdatedAt = reader.GetDateTime("updated_at")
+                            UpdatedAt = reader.GetDateTime("updated_at"),
                         };
                     }
                 }
             }
         }
         throw new Exception("Failed to add project.");
+    }
+
+    public async Task<Project> GetProjectByUrnAsync(string urn)
+    {
+        try
+        {
+            using (var connection = new MySqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                string query = "SELECT * FROM project WHERE urn = @urn";
+                var project = await connection.QueryFirstOrDefaultAsync<Project>(
+                    query,
+                    new { Urn = urn }
+                );
+                return project;
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Failed to get project by urn.", ex);
+        }
     }
 
     //public async Task<PagedResult<Project>> GetPagedProjectsAsync(int pageNumber, int pageSize)
@@ -123,6 +146,4 @@ public class ProjectRepositoryImpl : IProjectRepository
     //        await connection.OpenAsync();
     //    }
     //}
-
-
 }
