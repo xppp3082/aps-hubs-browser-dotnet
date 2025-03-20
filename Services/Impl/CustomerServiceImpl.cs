@@ -152,4 +152,9 @@ public class CustomerServiceImpl : ICustomerService
 
         return await _customerRepository.UpdateCustomerAsync(existingCustomer);
     }
+
+    public async Task<bool> RemoveCustomerFromProjectAsync(string projectUrn, List<int> customerIds)
+    {
+        return await _customerRepository.RemoveCustomerFromProjectAsync(projectUrn, customerIds);
+    }
 }

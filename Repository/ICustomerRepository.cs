@@ -33,4 +33,5 @@ public interface ICustomerRepository
         int pageNumber,
         int pageSize
     );
+    Task<bool> RemoveCustomerFromProjectAsync(string projectUrn, List<int> customerIds);
 }

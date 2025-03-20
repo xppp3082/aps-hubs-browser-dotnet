@@ -205,6 +205,38 @@ public class CustomerController : ControllerBase
     }
 
     /// <summary>
+    /// 移除客戶與專案關聯
+    /// </summary>
+    /// <param name="projectUrn">專案URN</param>
+    /// <param name="customerIds">客戶ID列表</param>
+    /// <returns>操作結果</returns>
+    [HttpDelete("project/{projectUrn}/remove")]
+    public async Task<IActionResult> RemoveCustomerFromProject(
+        string projectUrn,
+        [FromBody] List<int> customerIds
+    )
+    {
+        try
+        {
+            var result = await _customerService.RemoveCustomerFromProjectAsync(
+                projectUrn,
+                customerIds
+            );
+            if (result)
+            {
+                return Ok(
+                    new { Message = "客戶與專案關聯移除成功", RemovedCount = customerIds.Count }
+                );
+            }
+            return Ok(new { Message = "客戶與專案關聯移除成功", RemovedCount = 0 });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// 更新客戶
     /// </summary>
     /// <param name="id"> 客戶 Id</param>

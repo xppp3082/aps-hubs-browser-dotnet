@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
+using Dapper;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
-using Org.BouncyCastle.Asn1.Misc;
 
 public class CustomerRepositoryImpl : ICustomerRepository
 {
@@ -145,6 +145,32 @@ public class CustomerRepositoryImpl : ICustomerRepository
         }
     }
 
+    public async Task<bool> RemoveCustomerFromProjectAsync(string projectUrn, List<int> customerIds)
+    {
+        using (var connection = new MySqlConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+            using (var transaction = await connection.BeginTransactionAsync())
+            {
+                try
+                {
+                    string sql =
+                        @"DELETE FROM customer_project WHERE project_id = (SELECT id FROM project WHERE urn = @projectUrn) AND customer_id IN @customerIds";
+                    var parameters = new { ProjectUrn = projectUrn, CustomerIds = customerIds };
+                    // 執行刪除操作
+                    var affectedRows = await connection.ExecuteAsync(sql, parameters, transaction);
+                    await transaction.CommitAsync();
+                    return affectedRows > 0;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception($"移除客戶與專案關聯時發生錯誤: {ex.Message}");
+                }
+            }
+        }
+    }
+
     public async Task<List<Customer>> GetAllCustomersAsync()
     {
         List<Customer> customers = new List<Customer>();
@@ -253,7 +279,7 @@ public class CustomerRepositoryImpl : ICustomerRepository
                 FROM customer c
                 JOIN customer_project cp ON c.id = cp.customer_id
                 WHERE cp.project_id = @projectId
-                ORDER BY c.id 
+                ORDER BY cp.updated_at DESC, c.id DESC
                 LIMIT @offset, @pageSize";
 
                 var customers = new List<Customer>();
@@ -477,11 +503,11 @@ public class CustomerRepositoryImpl : ICustomerRepository
                 var offset = (pageNumber - 1) * pageSize;
                 string query =
                     @"
-                SELECT DISTINCT c.* 
+                SELECT DISTINCT c.* ,cp.updated_at
                 FROM customer c
                 JOIN customer_project cp ON c.id = cp.customer_id
                 WHERE cp.project_id = (SELECT id FROM project WHERE urn = @projectUrn)
-                ORDER BY c.id 
+                ORDER BY cp.updated_at DESC
                 LIMIT @offset, @pageSize";
 
                 var customers = new List<Customer>();

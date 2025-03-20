@@ -21,4 +21,5 @@ public interface ICustomerService
         string projectUrn,
         int pageNumber
     );
+    Task<bool> RemoveCustomerFromProjectAsync(string projectUrn, List<int> customerIds);
 }

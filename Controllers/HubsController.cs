@@ -109,23 +109,117 @@ public class HubsController : ControllerBase
                     }
                 );
             }
-            // var items =
-            //     from entry in contents
-            //     where entry is ItemData
-            //     select entry as ItemData into item
-            //     select new
-            //     {
-            //         id = item.Id,
-            //         name = item.Attributes.DisplayName,
-            //         createdTime = item.Attributes.CreateTime,
-            //         createUserName = item.Attributes.CreateUserName,
-            //         lastModifiedTime = item.Attributes.LastModifiedTime,
-            //         lastModifiedUserName = item.Attributes.LastModifiedUserName,
-            //         folder = false,
-            //         tipVersion = item.Relationships.Tip,
-            //     };
-            // return Ok(folders.Concat(items));
             var result = folders.Cast<object>().Concat(itemsList);
+            return Ok(result);
+        }
+    }
+
+    [HttpGet("{hub}/projects/{project}/full-contents")]
+    public async Task<ActionResult> ListFullContent(
+        string hub,
+        string project,
+        [FromQuery] string folder_id
+    )
+    {
+        var tokens = await AuthController.PrepareTokens(Request, Response, _aps);
+        if (tokens == null)
+        {
+            return Unauthorized();
+        }
+
+        if (string.IsNullOrEmpty(folder_id))
+        {
+            return Ok(
+                from folder in await _aps.GetTopFolders(hub, project, tokens)
+                select new
+                {
+                    id = folder.Id,
+                    name = folder.Attributes.DisplayName,
+                    folder = true,
+                }
+            );
+        }
+        else
+        {
+            var contents = await _aps.GetFullFolderContents(project, folder_id, tokens);
+            var mainData = contents.Data;
+            var includedData = contents.Included;
+
+            // 處理資料夾
+            var folders =
+                from entry in mainData
+                where entry is FolderData
+                select entry as FolderData into folder
+                select new
+                {
+                    id = folder.Id,
+                    versionId = (object)null,
+                    name = folder.Attributes.DisplayName,
+                    createdTime = folder.Attributes.CreateTime,
+                    createUserName = folder.Attributes.CreateUserName,
+                    lastModifiedTime = folder.Attributes.LastModifiedTime,
+                    lastModifiedUserName = folder.Attributes.LastModifiedUserName,
+                    folder = true,
+                    tipVersion = (object)null, // 添加一個空的 tipVersion 屬性以保持結構一致
+                };
+
+            // 處理項目及其版本
+            var items = new List<object>();
+            foreach (var entry in mainData.Where(e => e is ItemData))
+            {
+                var item = entry as ItemData;
+                object versionData = null;
+
+                VersionData versionInfo = null;
+                // 從 item 的關係中獲取 tip 版本的 ID
+                if (item.Relationships?.Tip?.Data?.Id != null)
+                {
+                    var versionId = item.Relationships.Tip.Data.Id;
+                    // 從 includedData 中查找對應的版本信息
+                    versionInfo = includedData?.FirstOrDefault(i => i.Id.Equals(versionId));
+
+                    if (versionInfo != null && versionInfo.Attributes != null)
+                    {
+                        // 創建一個包含所需版本信息的對象
+                        versionData = new
+                        {
+                            versionNumber = versionInfo.Attributes.VersionNumber,
+                            processState = versionInfo.Attributes.Extension?.Data != null
+                            && versionInfo.Attributes.Extension.Data.ContainsKey("processState")
+                                ? versionInfo.Attributes.Extension.Data["processState"]
+                                : null,
+                            extractionState = versionInfo.Attributes.Extension?.Data != null
+                            && versionInfo.Attributes.Extension.Data.ContainsKey("extractionState")
+                                ? versionInfo.Attributes.Extension.Data["extractionState"]
+                                : null,
+                            revisionDisplayLabel = versionInfo.Attributes.Extension?.Data != null
+                            && versionInfo.Attributes.Extension.Data.ContainsKey(
+                                "revisionDisplayLabel"
+                            )
+                                ? versionInfo.Attributes.Extension.Data["revisionDisplayLabel"]
+                                : null,
+                        };
+                    }
+                }
+
+                items.Add(
+                    new
+                    {
+                        id = item.Id,
+                        versionId = versionInfo.Id,
+                        name = item.Attributes.DisplayName,
+                        createdTime = item.Attributes.CreateTime,
+                        createUserName = item.Attributes.CreateUserName,
+                        lastModifiedTime = item.Attributes.LastModifiedTime,
+                        lastModifiedUserName = item.Attributes.LastModifiedUserName,
+                        folder = false,
+                        tipVersion = versionData,
+                    }
+                );
+            }
+
+            // 合併結果
+            var result = folders.Cast<object>().Concat(items);
             return Ok(result);
         }
     }

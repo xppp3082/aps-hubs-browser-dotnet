@@ -52,6 +52,36 @@ public partial class APS
         return contents.Data;
     }
 
+    public async Task<FolderContents> GetFullFolderContents(
+        string projectId,
+        string folderId,
+        Tokens tokens
+    )
+    {
+        var dataManagementClient = new DataManagementClient();
+        var contents = await dataManagementClient.GetFolderContentsAsync(
+            projectId,
+            folderId,
+            accessToken: tokens.InternalToken
+        );
+        return contents;
+    }
+
+    public async Task<IEnumerable<IFolderRefsData>> GetFolderRefs(
+        string projectId,
+        string folderId,
+        Tokens tokens
+    )
+    {
+        var dataManagementClient = new DataManagementClient();
+        var refs = await dataManagementClient.GetFolderRefsAsync(
+            projectId,
+            folderId,
+            accessToken: tokens.InternalToken
+        );
+        return refs.Data;
+    }
+
     public async Task<IEnumerable<VersionData>> GetVersions(
         string projectId,
         string itemId,
