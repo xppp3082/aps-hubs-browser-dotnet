@@ -257,4 +257,37 @@ public class HubsController : ControllerBase
         // return Ok(tipVersion);
         return Ok(new { id = tipVersion.Id, attributes = tipVersion.Attributes });
     }
+
+    [HttpGet("{hub}/projects/{project}/contents/{item}/urn")]
+    public async Task<ActionResult> GetFileUrn(string hub, string project, string item)
+    {
+        var tokens = await AuthController.PrepareTokens(Request, Response, _aps);
+        if (tokens == null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            // Get the tip version of the item
+            var tipVersion = await _aps.GetTipVersion(project, item, tokens);
+            if (tipVersion == null)
+            {
+                return NotFound("Tip version not found");
+            }
+
+            // Get the URN from the tip version's relationships
+            var urn = tipVersion.Relationships?.Storage?.Data?.Id;
+            if (string.IsNullOrEmpty(urn))
+            {
+                return NotFound("URN not found");
+            }
+
+            return Ok(new { urn });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 }
