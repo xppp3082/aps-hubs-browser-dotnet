@@ -78,7 +78,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("refresh_token", tokens.RefreshToken, cookieOptions);
         Response.Cookies.Append("expires_at", tokens.ExpiresAt.ToString(), cookieOptions);
         // return Redirect("/");
-        return Redirect($"{_frontendUrl}/main");
+        return Redirect($"{_frontendUrl}/hubs");
     }
 
     [HttpGet("profile")]
