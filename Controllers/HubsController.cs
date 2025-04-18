@@ -290,4 +290,48 @@ public class HubsController : ControllerBase
             return StatusCode(500, new { error = ex.Message });
         }
     }
+
+    [HttpGet("{hub}/projects/{project}/folder-tree")]
+    public async Task<ActionResult> GetFolderTree(string hub, string project)
+    {
+        var tokens = await AuthController.PrepareTokens(Request, Response, _aps);
+        if (tokens == null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            // 首先獲取頂層資料夾（Project Files）
+            var topFolders = await _aps.GetTopFolders(hub, project, tokens);
+            var result = new List<object>();
+
+            foreach (var folder in topFolders)
+            {
+                var folderContents = await _aps.GetFolderContents(project, folder.Id, tokens);
+                var subFolders = folderContents.Where(item => item is FolderData)
+                    .Select(item => item as FolderData)
+                    .Select(subFolder => new
+                    {
+                        id = subFolder.Id,
+                        name = subFolder.Attributes.DisplayName,
+                        folder = true
+                    });
+
+                result.Add(new
+                {
+                    id = folder.Id,
+                    name = folder.Attributes.DisplayName,
+                    folder = true,
+                    items = subFolders
+                });
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 }
