@@ -21,5 +21,7 @@ public interface ICustomerService
         string projectUrn,
         int pageNumber
     );
+    Task<List<Customer>> GetAllCustomersNotInProjectUrnAsync(string projectUrn);
     Task<bool> RemoveCustomerFromProjectAsync(string projectUrn, List<int> customerIds);
+    Task<List<Customer>> SearchCustomersNotInProjectUrnAsync(string projectUrn, string searchTerm);
 }

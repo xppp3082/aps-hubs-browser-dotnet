@@ -547,6 +547,43 @@ public class CustomerRepositoryImpl : ICustomerRepository
         }
     }
 
+    public async Task<List<Customer>> GetAllCustomersNotInProjectUrnAsync(string projectUrn)
+    {
+        List<Customer> customerList = new List<Customer>();
+        using (var connection = new MySqlConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+            string query =
+                @"
+            SELECT * FROM customer c
+            WHERE NOT EXISTS (
+                SELECT 1 FROM customer_project cp 
+                WHERE cp.customer_id = c.id AND cp.project_id = (SELECT id FROM project WHERE urn = @projectUrn)
+            )";
+            using (var command = new MySqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@projectUrn", projectUrn);
+                var customers = await command.ExecuteReaderAsync();
+
+                while (await customers.ReadAsync())
+                {
+                    customerList.Add(
+                        new Customer
+                        {
+                            Id = customers.GetInt32("id"),
+                            Name = customers.GetString("name"),
+                            Phone = customers.GetString("phone"),
+                            Email = customers.GetString("email"),
+                            CreatedAt = customers.GetDateTime("created_at"),
+                            UpdatedAt = customers.GetDateTime("updated_at"),
+                        }
+                    );
+                }
+            }
+        }
+        return customerList;
+    }
+
     public async Task<PagedResult<Customer>> GetPagedCustomersNotInProjectUrnAsync(
         string projectUrn,
         int pageNumber,
@@ -621,5 +658,47 @@ public class CustomerRepositoryImpl : ICustomerRepository
                 };
             }
         }
+    }
+
+    public async Task<List<Customer>> SearchCustomersNotInProjectUrnAsync(string projectUrn, string searchTerm)
+    {
+        List<Customer> customerList = new List<Customer>();
+        using (var connection = new MySqlConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+            string query =
+                @"
+            SELECT * FROM customer c
+            WHERE NOT EXISTS (
+                SELECT 1 FROM customer_project cp 
+                WHERE cp.customer_id = c.id AND cp.project_id = (SELECT id FROM project WHERE urn = @projectUrn)
+            )
+            AND (
+                c.name LIKE @searchTerm 
+                OR c.email LIKE @searchTerm
+            )";
+            using (var command = new MySqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@projectUrn", projectUrn);
+                command.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
+                var customers = await command.ExecuteReaderAsync();
+
+                while (await customers.ReadAsync())
+                {
+                    customerList.Add(
+                        new Customer
+                        {
+                            Id = customers.GetInt32("id"),
+                            Name = customers.GetString("name"),
+                            Phone = customers.GetString("phone"),
+                            Email = customers.GetString("email"),
+                            CreatedAt = customers.GetDateTime("created_at"),
+                            UpdatedAt = customers.GetDateTime("updated_at"),
+                        }
+                    );
+                }
+            }
+        }
+        return customerList;
     }
 }

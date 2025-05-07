@@ -151,6 +151,25 @@ public class CustomerController : ControllerBase
     }
 
     /// <summary>
+    /// 獲取所有不在指定專案的客戶
+    /// </summary>
+    /// <param name="projectUrn">專案URN</param>
+    /// <returns>所有不在指定專案的客戶</returns>
+    [HttpGet("not-in-project/{projectUrn}")]
+    public async Task<ActionResult<List<Customer>>> GetAllCustomersNotInProjectUrn(string projectUrn)
+    {
+        try
+        {
+            var result = await _customerService.GetAllCustomersNotInProjectUrnAsync(projectUrn);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// 新增客戶
     /// </summary>
     /// <param name="customer"> 客戶</param>
@@ -287,6 +306,29 @@ public class CustomerController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 搜尋不在指定專案的客戶
+    /// </summary>
+    /// <param name="projectUrn">專案URN</param>
+    /// <param name="searchTerm">搜尋關鍵字</param>
+    /// <returns>搜尋結果</returns>
+    [HttpGet("not-in-project/{projectUrn}/search")]
+    public async Task<ActionResult<List<Customer>>> SearchCustomersNotInProjectUrn(
+        string projectUrn,
+        string searchTerm
+    )
+    {
+        try
+        {
+            var result = await _customerService.SearchCustomersNotInProjectUrnAsync(projectUrn, searchTerm);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error: {ex.Message}");
         }
     }
 }
