@@ -84,14 +84,14 @@ public class HubsController : ControllerBase
                     lastModifiedTime = folder.Attributes.LastModifiedTime,
                     lastModifiedUserName = folder.Attributes.LastModifiedUserName,
                     folder = true,
-                    tipVersion = (object)null, // 添加一個空的 tipVersion 屬性以保持結構一致
+                    // tipVersion = (object)null, // 添加一個空的 tipVersion 屬性以保持結構一致
                 };
 
             var itemsList = new List<object>();
             foreach (var entry in contents.Where(e => e is ItemData))
             {
                 var item = entry as ItemData;
-                var tipVersion = await _aps.GetTipVersion(project, item.Id, tokens);
+                // var tipVersion = await _aps.GetTipVersion(project, item.Id, tokens);
 
                 itemsList.Add(
                     new
@@ -103,9 +103,9 @@ public class HubsController : ControllerBase
                         lastModifiedTime = item.Attributes.LastModifiedTime,
                         lastModifiedUserName = item.Attributes.LastModifiedUserName,
                         folder = false,
-                        tipVersion = tipVersion != null
-                            ? tipVersion.Attributes.Extension.Data
-                            : null,
+                        // tipVersion = tipVersion != null
+                        //     ? tipVersion.Attributes.Extension.Data
+                        //     : null,
                     }
                 );
             }
