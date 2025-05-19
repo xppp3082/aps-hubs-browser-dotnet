@@ -481,6 +481,57 @@ public class CustomerRepositoryImpl : ICustomerRepository
         throw new Exception("Failed to delete customer.");
     }
 
+    public async Task<List<Customer>> GetCustomersByProjectUrnAsync(string projectUrn)
+    {
+        if (string.IsNullOrEmpty(projectUrn))
+        {
+            throw new ArgumentNullException(nameof(projectUrn), "專案URN不能為空");
+        }
+
+        try
+        {
+            using (var connection = new MySqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                string query =
+                    @"
+                SELECT * FROM customer c
+                JOIN customer_project cp ON c.id = cp.customer_id
+                WHERE cp.project_id = (SELECT id FROM project WHERE urn = @projectUrn)
+                ORDER BY cp.updated_at DESC";
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@projectUrn", projectUrn);
+                    var customers = await command.ExecuteReaderAsync();
+                    List<Customer> customerList = new List<Customer>();
+                    while (await customers.ReadAsync())
+                    {
+                        customerList.Add(
+                            new Customer
+                            {
+                                Id = customers.GetInt32("id"),
+                                Name = customers.GetString("name"),
+                                Phone = customers.GetString("phone"),
+                                Email = customers.GetString("email"),
+                                CreatedAt = customers.GetDateTime("created_at"),
+                                UpdatedAt = customers.GetDateTime("updated_at"),
+                            }
+                        );
+                    }
+                    return customerList;
+                }
+            }
+        }
+        catch (MySqlException ex)
+        {
+            throw new Exception($"資料庫操作失敗: {ex.Message}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"獲取專案客戶列表時發生錯誤: {ex.Message}", ex);
+        }
+    }
+
     public async Task<PagedResult<Customer>> GetPagedCustomersByProjectUrnAsync(
         string projectUrn,
         int pageNumber,
@@ -658,6 +709,46 @@ public class CustomerRepositoryImpl : ICustomerRepository
                 };
             }
         }
+    }
+
+    public async Task<List<Customer>> SearchCustomersByProjectUrnAsync(string projectUrn, string searchTerm)
+    {
+        List<Customer> customerList = new List<Customer>();
+        using (var connection = new MySqlConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+            string query =
+                @"
+            SELECT * FROM customer c
+            JOIN customer_project cp ON c.id = cp.customer_id
+            WHERE cp.project_id = (SELECT id FROM project WHERE urn = @projectUrn)
+            AND (
+                c.name LIKE @searchTerm 
+                OR c.email LIKE @searchTerm
+            )";
+            using (var command = new MySqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@projectUrn", projectUrn);
+                command.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
+                var customers = await command.ExecuteReaderAsync();
+
+                while (await customers.ReadAsync())
+                {
+                    customerList.Add(
+                        new Customer
+                        {
+                            Id = customers.GetInt32("id"),
+                            Name = customers.GetString("name"),
+                            Phone = customers.GetString("phone"),
+                            Email = customers.GetString("email"),
+                            CreatedAt = customers.GetDateTime("created_at"),
+                            UpdatedAt = customers.GetDateTime("updated_at"),
+                        }
+                    );
+                }
+            }
+        }
+        return customerList;
     }
 
     public async Task<List<Customer>> SearchCustomersNotInProjectUrnAsync(string projectUrn, string searchTerm)

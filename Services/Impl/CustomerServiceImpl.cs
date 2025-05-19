@@ -163,8 +163,18 @@ public class CustomerServiceImpl : ICustomerService
         return await _customerRepository.GetAllCustomersNotInProjectUrnAsync(projectUrn);
     }
 
+    public async Task<List<Customer>> SearchCustomersByProjectUrnAsync(string projectUrn, string searchTerm)
+    {
+        return await _customerRepository.SearchCustomersByProjectUrnAsync(projectUrn, searchTerm);
+    }
+
     public async Task<List<Customer>> SearchCustomersNotInProjectUrnAsync(string projectUrn, string searchTerm)
     {
         return await _customerRepository.SearchCustomersNotInProjectUrnAsync(projectUrn, searchTerm);
+    }
+
+    public async Task<List<Customer>> GetCustomersByProjectUrnAsync(string projectUrn)
+    {
+        return await _customerRepository.GetCustomersByProjectUrnAsync(projectUrn);
     }
 }

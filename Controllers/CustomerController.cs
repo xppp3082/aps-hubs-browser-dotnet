@@ -75,6 +75,48 @@ public class CustomerController : ControllerBase
     //     }
     // }
 
+    /// <summary>   
+    /// 獲取指定專案的客戶
+    /// </summary>
+    /// <param name="projectUrn">專案URN</param>
+    /// <returns>指定專案的客戶</returns>
+    [HttpGet("project/{projectUrn}")]
+    public async Task<ActionResult<List<Customer>>> GetCustomersByProjectUrn(string projectUrn)
+    {
+        try
+        {
+            var result = await _customerService.GetCustomersByProjectUrnAsync(projectUrn);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 搜尋指定專案的客戶
+    /// </summary>
+    /// <param name="projectUrn">專案URN</param>
+    /// <param name="searchTerm">搜尋關鍵字</param>
+    /// <returns>搜尋結果</returns>
+    [HttpGet("project/{projectUrn}/search")]
+    public async Task<ActionResult<List<Customer>>> SearchCustomersByProjectUrn(
+        [FromRoute]string projectUrn,
+        [FromQuery] string searchTerm
+    )
+    {
+        try
+        {
+            var result = await _customerService.SearchCustomersByProjectUrnAsync(projectUrn, searchTerm);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
+    }
+
     /// <summary>
     /// 分頁獲取指定專案的客戶
     /// </summary>
@@ -317,8 +359,8 @@ public class CustomerController : ControllerBase
     /// <returns>搜尋結果</returns>
     [HttpGet("not-in-project/{projectUrn}/search")]
     public async Task<ActionResult<List<Customer>>> SearchCustomersNotInProjectUrn(
-        string projectUrn,
-        string searchTerm
+        [FromRoute]string projectUrn,
+        [FromQuery] string searchTerm
     )
     {
         try

@@ -13,6 +13,7 @@ public interface ICustomerService
     Task<PagedResult<Customer>> GetPagedCustomersByProjectAsync(int projectId, int pageNumber);
     Task<PagedResult<Customer>> GetPagedCustomersNotInProjectAsync(int projectId, int pageNumber);
 
+    Task<List<Customer>> GetCustomersByProjectUrnAsync(string projectUrn);
     Task<PagedResult<Customer>> GetPagedCustomersByProjectUrnAsync(
         string projectUrn,
         int pageNumber
@@ -23,5 +24,6 @@ public interface ICustomerService
     );
     Task<List<Customer>> GetAllCustomersNotInProjectUrnAsync(string projectUrn);
     Task<bool> RemoveCustomerFromProjectAsync(string projectUrn, List<int> customerIds);
+    Task<List<Customer>> SearchCustomersByProjectUrnAsync(string projectUrn, string searchTerm);
     Task<List<Customer>> SearchCustomersNotInProjectUrnAsync(string projectUrn, string searchTerm);
 }

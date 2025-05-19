@@ -25,6 +25,8 @@ public interface ICustomerRepository
         int pageSize
     );
 
+    Task<List<Customer>> GetCustomersByProjectUrnAsync(string projectUrn);
+
     Task<PagedResult<Customer>> GetPagedCustomersByProjectUrnAsync(
         string projectUrn,
         int pageNumber,
@@ -39,5 +41,6 @@ public interface ICustomerRepository
         int pageSize
     );
     Task<bool> RemoveCustomerFromProjectAsync(string projectUrn, List<int> customerIds);
+    Task<List<Customer>> SearchCustomersByProjectUrnAsync(string projectUrn, string searchTerm);
     Task<List<Customer>> SearchCustomersNotInProjectUrnAsync(string projectUrn, string searchTerm);
 }
