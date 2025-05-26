@@ -13,7 +13,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Pomelo.EntityFrameworkCore.MySql;
 
+
 // Start Up 主要負責應用程式的設定與中介軟體 (Middleware) 的設定
+// ConfigureServices 是設定「什麼」服務可用
 public class Startup
 {
     // 接受 Iconfiguration 實例，用來讀取 appsetting.json 等環境變數的設定內容˙
@@ -56,6 +58,9 @@ public class Startup
 
         services.AddScoped<IProjectRepository, ProjectRepositoryImpl>();
         services.AddScoped<IProjectService, ProjectServiceImpl>();
+
+        services.AddScoped<IEditFilterRepository, EditFilterRepositoryImpl>();
+        services.AddScoped<IEditFilterService, EditFilterServiceImpl>();
         // // 配置 Dapper 的全局映射
         // DefaultTypeMap.MatchNamesWithUnderscores = true;
 
@@ -114,7 +119,7 @@ public class Startup
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     // 設定 HTTP 處理管道
-
+    // 如果是要「使用」或「啟用」服務，放在 Configure
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         // 若處在開發階段，則啟用開發者錯誤頁，提供錯誤的詳細資訊，方便除錯

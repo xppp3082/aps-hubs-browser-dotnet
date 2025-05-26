@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
 /// <summary>
 /// 管理客變紀錄相關的 API 端點
@@ -33,8 +34,16 @@ public class ChangeDetailController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllChangeDetails()
     {
-        var changeDetails = await _changeDetailService.GetAllChangeDetailsAsync();
-        return Ok(changeDetails);
+        try
+        {
+            var changeDetails = await _changeDetailService.GetAllChangeDetailsAsync();
+            return Ok(changeDetails);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "GetAllChangeDetails 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -45,8 +54,16 @@ public class ChangeDetailController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetChangeDetailById([FromRoute] int id)
     {
-        var changeDetail = await _changeDetailService.GetChangeDetailByIdAsync(id);
-        return Ok(changeDetail);
+        try
+        {
+            var changeDetail = await _changeDetailService.GetChangeDetailByIdAsync(id);
+            return Ok(changeDetail);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "GetChangeDetailById 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -57,8 +74,16 @@ public class ChangeDetailController : ControllerBase
     [HttpGet("unit")]
     public async Task<IActionResult> GetChangeDetailsByUnitId([FromQuery] int unitId)
     {
-        var changeDetails = await _changeDetailService.GetChangeDetailsByUnitIdAsync(unitId);
-        return Ok(changeDetails);
+        try
+        {
+            var changeDetails = await _changeDetailService.GetChangeDetailsByUnitIdAsync(unitId);
+            return Ok(changeDetails);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "GetChangeDetailsByUnitId 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -73,11 +98,19 @@ public class ChangeDetailController : ControllerBase
         [FromQuery] int page = 1
     )
     {
-        var changeDetails = await _changeDetailService.GetPagedChangeDetailsByUnitIdAsync(
-            unitId,
-            page
-        );
-        return Ok(changeDetails);
+        try
+        {
+            var changeDetails = await _changeDetailService.GetPagedChangeDetailsByUnitIdAsync(
+                unitId,
+                page
+            );
+            return Ok(changeDetails);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "GetPagedChangeDetailsByUnitId 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -88,8 +121,16 @@ public class ChangeDetailController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateChangeDetail([FromBody] ChangeDetail changeDetail)
     {
-        var createdChangeDetail = await _changeDetailService.CreateChangeDetailAsync(changeDetail);
-        return Ok(createdChangeDetail);
+        try
+        {
+            var createdChangeDetail = await _changeDetailService.CreateChangeDetailAsync(changeDetail);
+            return Ok(createdChangeDetail);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "CreateChangeDetail 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -104,9 +145,17 @@ public class ChangeDetailController : ControllerBase
         [FromBody] ChangeDetail changeDetail
     )
     {
-        changeDetail.Id = id;
-        var updatedChangeDetail = await _changeDetailService.UpdateChangeDetailAsync(changeDetail);
-        return Ok(updatedChangeDetail);
+        try
+        {
+            changeDetail.Id = id;
+            var updatedChangeDetail = await _changeDetailService.UpdateChangeDetailAsync(changeDetail);
+            return Ok(updatedChangeDetail);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "UpdateChangeDetail 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -117,7 +166,15 @@ public class ChangeDetailController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteChangeDetail([FromRoute] int id)
     {
-        var deleted = await _changeDetailService.DeleteChangeDetailAsync(id);
-        return Ok(deleted);
+        try
+        {
+            var deleted = await _changeDetailService.DeleteChangeDetailAsync(id);
+            return Ok(deleted);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "DeleteChangeDetail 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
 /// <summary>
 /// 管理戶型相關的 API 端點
@@ -31,8 +32,16 @@ public class UnitController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllUnits()
     {
-        var units = await _unitService.GetAllUnitsAsync();
-        return Ok(units);
+        try
+        {
+            var units = await _unitService.GetAllUnitsAsync();
+            return Ok(units);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "GetAllUnits 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -49,9 +58,16 @@ public class UnitController : ControllerBase
         [FromBody] Unit unit
     )
     {
-        // unit.ProjectId = projectId;
-        var newUnit = await _unitService.AddUnitAsync(unit, customerId, projectId);
-        return CreatedAtAction(nameof(GetAllUnits), new { id = newUnit.Id }, newUnit);
+        try
+        {
+            var newUnit = await _unitService.AddUnitAsync(unit, customerId, projectId);
+            return CreatedAtAction(nameof(GetAllUnits), new { id = newUnit.Id }, newUnit);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "AddUnit 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -62,12 +78,20 @@ public class UnitController : ControllerBase
     [HttpDelete]
     public async Task<IActionResult> DeleteUnit([FromQuery] int id)
     {
-        var result = await _unitService.DeleteUnitAsync(id);
-        if (result)
+        try
         {
-            return Ok("Unit deleted successfully");
+            var result = await _unitService.DeleteUnitAsync(id);
+            if (result)
+            {
+                return Ok("Unit deleted successfully");
+            }
+            return NotFound("Unit not found");
         }
-        return NotFound("Unit not found");
+        catch (Exception ex)
+        {
+            Log.Error(ex, "DeleteUnit 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -87,9 +111,16 @@ public class UnitController : ControllerBase
     )
     {
         unit.Id = id;
-        Console.WriteLine(unit);
-        var updatedUnit = await _unitService.UpdateUnitAsync(unit, projectId, customerId);
-        return Ok(updatedUnit);
+        try
+        {
+            var updatedUnit = await _unitService.UpdateUnitAsync(unit, projectId, customerId);
+            return Ok(updatedUnit);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "UpdateUnit 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     // [HttpGet("project/{projectId}")]
@@ -110,9 +141,17 @@ public class UnitController : ControllerBase
         [FromRoute] int projectId,
         [FromRoute] int customerId
     )
-    {
-        var units = await _unitService.GetUnitsByCustomerProjectIdAsync(projectId, customerId);
-        return Ok(units);
+    {   
+        try
+        {
+            var units = await _unitService.GetUnitsByCustomerProjectIdAsync(projectId, customerId);
+            return Ok(units);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "GetUnitsByCustomerProjectId 發生錯誤: {Message}", ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -140,6 +179,7 @@ public class UnitController : ControllerBase
         }
         catch (Exception ex)
         {
+            Log.Error(ex, "GetPagedUnitsByProjectIdAndCustomerId 發生錯誤: {Message}", ex.Message);
             return StatusCode(500, $"Error: {ex.Message}");
         }
     }

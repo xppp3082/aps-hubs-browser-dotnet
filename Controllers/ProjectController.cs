@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
 /// <summary>
 /// 管理項目相關的 API 端點
@@ -33,6 +34,7 @@ public class ProjectController : ControllerBase
         }
         catch (Exception ex)
         {
+            Log.Error(ex, "CheckOrCreateProject 發生錯誤: {Message}", ex.Message);
             return StatusCode(500, $"Error: {ex.Message}");
         }
     }
