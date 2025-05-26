@@ -10,9 +10,14 @@ public class EditFilterServiceImpl : IEditFilterService
         _editFilterRepository = editFilterRepository;
     }
 
-    public async Task<int> CreateEditFilterAsync(FilterObject filterObject)
+    public async Task<int> CreateEditFilterAsync(EditFilter filterObject)
     {
         return await _editFilterRepository.CreateEditFilter(filterObject);;
+    }
+
+    public async Task<EditFilter> GetEditFilterIdByModelUrnAsync(string modelUrn)
+    {
+        return await _editFilterRepository.GetEditFilterIdByModelUrn(modelUrn);
     }
 }
 

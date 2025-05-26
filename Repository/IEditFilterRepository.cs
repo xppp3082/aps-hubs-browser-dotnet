@@ -8,5 +8,6 @@ public interface IEditFilterRepository
     Task DeleteEditFilterAndElements(int modelId);
     Task<int> InsertEditFilter(int modelId, string category, int categoryId, string symbolName);
     Task InsertEditableElements(int editFilterId, List<int> dbIds);
-    Task<int> CreateEditFilter(FilterObject filterObject);
+    Task<int> CreateEditFilter(EditFilter filterObject);
+    Task<EditFilter> GetEditFilterIdByModelUrn(string modelUrn);
 }

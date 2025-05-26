@@ -8,11 +8,11 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .WriteTo.Console()
-            .WriteTo.File("logs/archiflex_log-.txt", rollingInterval: RollingInterval.Day)
-            .CreateLogger();
+        // Log.Logger = new LoggerConfiguration()
+        //     .MinimumLevel.Information()
+        //     .WriteTo.Console()
+        //     .WriteTo.File("logs/archiflex_log-.txt", rollingInterval: RollingInterval.Day)
+        //     .CreateLogger();
         
         try
         {

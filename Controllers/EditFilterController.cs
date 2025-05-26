@@ -21,7 +21,7 @@ namespace aps_hubs_browser_dotnet.Controllers
         private readonly ILogger<EditFilterController> _logger;
 
         public EditFilterController(
-            IConfiguration configuration, 
+            IConfiguration configuration,
             IEditFilterService editFilterService,
             ILogger<EditFilterController> logger)
         {
@@ -32,7 +32,7 @@ namespace aps_hubs_browser_dotnet.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateEditFilter([FromBody] FilterObject filterObject)
+        public async Task<IActionResult> CreateEditFilter([FromBody] EditFilter filterObject)
         {
             Log.Information("Log from serilog: 開始創建 EditFilter: {@FilterObject}", filterObject);
             _logger.LogInformation("開始創建 EditFilter: {@FilterObject}", filterObject);
@@ -47,6 +47,12 @@ namespace aps_hubs_browser_dotnet.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+            [HttpGet]
+            public async Task<IActionResult> GetEditFilterIdByModelUrn([FromQuery] string modelUrn)
+            {
+                var editFilter = await _editFilterService.GetEditFilterIdByModelUrnAsync(modelUrn);
+                return Ok(editFilter);
+            }   
     }
 
 } 

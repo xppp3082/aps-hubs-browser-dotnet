@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public class FilterObject
+public class EditFilter
     {
         public string ProjectUrn { get; set; }
         public string ModelUrn { get; set; }

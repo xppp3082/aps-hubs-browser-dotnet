@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
+using Serilog;
 
 public class EditFilterRepositoryImpl : IEditFilterRepository
 {
@@ -25,7 +26,7 @@ public class EditFilterRepositoryImpl : IEditFilterRepository
             "SELECT id FROM project WHERE urn = @projectUrn",
             connection);
         command.Parameters.AddWithValue("@projectUrn", projectUrn);
-        
+
         var result = await command.ExecuteScalarAsync();
         return result != null ? Convert.ToInt32(result) : 0;
     }
@@ -85,7 +86,7 @@ public class EditFilterRepositoryImpl : IEditFilterRepository
         var deleteFilterCmd = new MySqlCommand(
             $"DELETE FROM edit_filter WHERE id IN ({string.Join(",", ids)})",
             connection);
-        await deleteFilterCmd.ExecuteNonQueryAsync();   
+        await deleteFilterCmd.ExecuteNonQueryAsync();
     }
 
     public async Task<int> InsertEditFilter(int modelId, string category, int categoryId, string symbolName)
@@ -127,7 +128,7 @@ public class EditFilterRepositoryImpl : IEditFilterRepository
     }
 
     // 集合前述所有判斷，進行 transaction，創建 EditFilter
-    public async Task<int> CreateEditFilter(FilterObject filterObject)
+    public async Task<int> CreateEditFilter(EditFilter filterObject)
     {
         using var connection = new MySqlConnection(_connectionString);
         await connection.OpenAsync();
@@ -157,6 +158,71 @@ public class EditFilterRepositoryImpl : IEditFilterRepository
         {
             await transaction.RollbackAsync();
             throw;
+        }
+    }
+
+    public async Task<EditFilter> GetEditFilterIdByModelUrn(string modelUrn)
+    {
+        try
+        {
+            using var connection = new MySqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var sql = @"
+        SELECT
+            p.urn AS ProjectUrn,
+            m.urn AS ModelUrn,
+            ef.id AS EditFilterId,
+            ef.category AS Category,
+            ef.categoryId AS CategoryId,
+            ef.symbol_name AS SymbolName,
+            ee.dbid AS DbId
+        FROM model m
+        JOIN project p ON m.project_id = p.id
+        LEFT JOIN edit_filter ef ON ef.model_id = m.id
+        LEFT JOIN editable_element ee ON ee.edit_filter_id = ef.id
+        WHERE m.urn = @modelUrn
+        ORDER BY ef.id, ee.dbid
+        ";
+
+        var checkedObjectDict = new Dictionary<int, CheckedObject>();
+        string projectUrn = null;
+        string modelUrnResult = null;
+
+        var rows = await connection.QueryAsync(sql, new { modelUrn });
+
+        foreach (var row in rows)
+        {
+            projectUrn = row.ProjectUrn;
+            modelUrnResult = row.ModelUrn;
+            if (row.EditFilterId == null) continue;
+
+            int editFilterId = (int)row.EditFilterId;
+            if (!checkedObjectDict.TryGetValue(editFilterId, out var checkedObj))
+            {
+                checkedObj = new CheckedObject
+                {
+                    Category = row.Category,
+                    CategoryId = row.CategoryId ?? 0,
+                    SymbolName = row.SymbolName,
+                    DbIds = new List<int>()
+                };
+                checkedObjectDict.Add(editFilterId, checkedObj);
+            }
+            if (row.DbId != null)
+                checkedObj.DbIds.Add((int)row.DbId);
+        }
+
+        return new EditFilter
+        {
+                ProjectUrn = projectUrn,
+                ModelUrn = modelUrnResult,
+                CheckedObjects = checkedObjectDict.Values.ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to get edit filter id by model urn.");
+            throw new Exception("Failed to get edit filter id by model urn.", ex);
         }
     }
 }
